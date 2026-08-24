@@ -13,7 +13,7 @@ import time
 
 from app.config import settings
 from app.db.database import init_db, close_db
-from app.api import health, sessions, messages, config_routes
+from app.api import health, sessions, messages, config_routes, ingestion
 
 
 # ─── Structured Logging Setup ──────────────────────────
@@ -134,6 +134,7 @@ app.include_router(health.router)
 app.include_router(sessions.router)
 app.include_router(messages.router)
 app.include_router(config_routes.router)
+app.include_router(ingestion.router)
 
 
 # ─── Root Redirect ──────────────────────────────────────
