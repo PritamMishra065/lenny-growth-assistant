@@ -1,128 +1,175 @@
 # 🎙️ The Lenny Growth Assistant
 
-An AI-powered conversational web application that ingests Lenny's Podcast transcripts to answer product management and growth questions, generate publication-ready content, and render rich artifacts — all from a polished chat interface.
+An enterprise-grade, full-stack conversational AI assistant grounded in **300+ transcripts from Lenny's Podcast**. Built for product managers, growth practitioners, and founders to extract battle-tested frameworks, generate publication-ready **Ship 30 for 30 essays**, and render interactive in-app **Artifacts** (like Claude Artifacts) with zero prompt engineering required.
 
-![Status](https://img.shields.io/badge/status-in_development-yellow)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![React](https://img.shields.io/badge/react-19-61dafb)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black)
 
-## ✨ Features
+---
 
-- **Grounded Q&A** — RAG-powered answers strictly from Lenny's Podcast transcripts with source citations
-- **Ship 30 for 30 Essays** — Generate ~1,250-word publication-ready essays with hooks, narrative arc, and actionable takeaways
-- **Artifact Viewer** — Render Markdown and HTML/CSS artifacts in-app alongside the chat (Claude Artifacts-style)
-- **Flexible LLM Toggle** — Switch between Ollama (local) and cloud providers (Claude, OpenAI) from the UI
-- **Session Management** — Independent chat sessions with persistent history
-- **Secure Rendering** — Sandboxed iframe + DOMPurify for safe artifact display
+## 📑 Table of Contents
+- [✨ Core Capabilities](#-core-capabilities)
+- [🏗️ System Architecture](#️-system-architecture)
+- [🚀 Quick Start (One-Command Run)](#-quick-start-one-command-run)
+- [🤖 LLM & Provider Configuration](#-llm--provider-configuration)
+- [📦 Transcript Ingestion & Knowledge Base](#-transcript-ingestion--knowledge-base)
+- [🔒 Security & Artifact Sanitization](#-security--artifact-sanitization)
+- [🧪 Running Automated Tests](#-running-automated-tests)
+- [📚 Documentation & Deliverables](#-documentation--deliverables)
+- [📹 Demo Video](#-demo-video)
 
-## 🏗️ Architecture
+---
+
+## ✨ Core Capabilities
+
+1. **Grounded Conversational Q&A (RAG Skill)**
+   - Answers product, growth, and leadership questions strictly grounded in transcript excerpts.
+   - Preserves multi-turn session context with independent history.
+   - Transparent source citations with guest names, episode titles, and direct links.
+   - Graceful *"I don't know"* fallback when context is missing.
+
+2. **Ship 30 for 30 Content Engine**
+   - Dedicated skill turning podcast frameworks into structured ~1,250-word Atomic Essays.
+   - Follows Ship 30 for 30 digital writing principles: provocative 3-line hook, visual cadence, bold emphasis, and actionable checklists.
+
+3. **In-App Artifact Viewer (Claude Artifacts-style)**
+   - Side-by-side split screen viewer that automatically opens when artifacts are created.
+   - Supports Markdown documents (PRDs, memos) and interactive HTML/CSS widgets (calculators, mockups).
+   - **Preview** and **Code** tabs with one-click **Copy** and **Download**.
+
+4. **Multi-Model Runtime Switcher**
+   - Seamlessly toggle between **Local Ollama (`llama3:8b` / `llama3.1:8b`)** and cloud providers (**Google Gemini**, **Anthropic Claude**, **OpenAI**) without restarting.
+
+5. **PostgreSQL Persistence**
+   - Independent chat sessions, messages, latency tracking, and token metadata stored asynchronously.
+
+---
+
+## 🏗️ System Architecture
 
 ```
-Frontend (React + Vite)  →  Backend (FastAPI)  →  PostgreSQL
-                                    ↓
-                             Agent Layer (Skills)
-                             ├── RAG Skill
-                             ├── Ship 30 Skill
-                             └── Artifact Skill
-                                    ↓
-                         LLM Router (Ollama / Claude / OpenAI)
-                                    ↓
-                         ChromaDB (Vector Store)
+┌────────────────────────────────────────────────────────────────────────┐
+│                          Docker Compose Stack                          │
+│                                                                        │
+│   ┌─────────────────────┐    ┌───────────────────────────────────┐    │
+│   │   Frontend (React)  │    │         Backend (FastAPI)         │    │
+│   │    • Vite + Nginx   │───▶│   • Asynchronous REST & SSE       │    │
+│   │    • Artifact Viewer│    │   • Intent Classifier & Router    │    │
+│   │    • Port 3000      │    │   • Port 8000                     │    │
+│   └─────────────────────┘    └───────────────┬───────────────────┘    │
+│                                              │                         │
+│                    ┌─────────────────────────┼──────────────────┐      │
+│                    ▼                         ▼                  ▼      │
+│          ┌──────────────────┐      ┌──────────────────┐  ┌───────────┐ │
+│          │    PostgreSQL    │      │  ChromaDB Vector │  │LLM Router │ │
+│          │  Sessions & Chat │      │  Local Embeddings│  │• Ollama   │ │
+│          │  Port 5432       │      │  303 Episodes    │  │• Gemini   │ │
+│          └──────────────────┘      └──────────────────┘  │• Claude   │ │
+│                                                          │• OpenAI   │ │
+│                                                          └───────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-See [docs/architecture.md](docs/architecture.md) for full details.
+See [docs/architecture.md](docs/architecture.md) for database schemas, API contracts, and component boundaries.
 
-## 📋 Prerequisites
+---
 
-- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/)
+## 🚀 Quick Start (One-Command Run)
+
+### 1. Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
 - [Ollama](https://ollama.ai/) installed on your host machine
-- (Optional) Anthropic or OpenAI API key for cloud LLM
 
-## 🚀 Quick Start
-
-### 1. Clone the repository
+### 2. Pull local Ollama models
 ```bash
-git clone https://github.com/YOUR_USERNAME/lenny-growth-assistant.git
-cd lenny-growth-assistant
-```
-
-### 2. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your API keys (if using cloud LLMs)
-```
-
-### 3. Pull the Ollama model
-```bash
-ollama pull llama3.1:8b
+ollama pull llama3:8b
 ollama pull nomic-embed-text
 ```
 
-### 4. Start everything
+### 3. Clone and configure
 ```bash
-docker compose up --build
+git clone https://github.com/YOUR_USERNAME/lenny-growth-assistant.git
+cd lenny-growth-assistant
+cp .env.example .env
 ```
 
-### 5. Open the app
-Navigate to [http://localhost:3000](http://localhost:3000)
+### 4. Start the application
+```bash
+docker compose up --build -d
+```
 
-## 🔧 Environment Variables
+### 5. Access the application
+- **Web UI:** [http://localhost:3000](http://localhost:3000)
+- **FastAPI Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check:** [http://localhost:8000/health](http://localhost:8000/health)
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | (in docker-compose) | PostgreSQL connection string |
-| `LLM_PROVIDER` | No | `ollama` | Active LLM: `ollama`, `anthropic`, `openai` |
-| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | No | `llama3.1:8b` | Ollama model name |
-| `ANTHROPIC_API_KEY` | If using Claude | — | Anthropic API key |
-| `OPENAI_API_KEY` | If using OpenAI | — | OpenAI API key |
+---
 
-See [.env.example](.env.example) for all variables.
+## 🤖 LLM & Provider Configuration
 
-## 🧪 Running Tests
+The application includes a zero-friction model toggle in the header:
+
+| Provider | Model Default | Requirements |
+|---|---|---|
+| **Ollama (Local)** | `llama3:8b` (or `llama3.1:8b`) | Free, runs 100% locally via `ollama serve` |
+| **Google Gemini** | `gemini-3.5-flash` | `GEMINI_API_KEY` in `.env` |
+| **Anthropic Claude** | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` in `.env` |
+| **OpenAI** | `gpt-4o-mini` | `OPENAI_API_KEY` in `.env` |
+
+---
+
+## 📦 Transcript Ingestion & Knowledge Base
+
+The repository includes **303 pre-parsed episodes** from Lenny's Podcast with rich metadata (guest, title, publication date, YouTube URL, keywords).
+
+### Managing Transcripts from the UI
+Click **"Manage Transcripts"** in the sidebar footer to:
+- View how many chunks are currently indexed.
+- Search across all 303 episodes.
+- Selectively ingest individual episodes on demand with progress updates.
+- Clear and re-index the vector store at any time.
+
+---
+
+## 🔒 Security & Artifact Sanitization
+
+1. **DOMPurify Sanitization**: All HTML generated by the model is sanitized before rendering to strip malicious attributes and unsafe scripts.
+2. **Sandboxed `<iframe>` Isolation**: Interactive HTML artifacts are rendered inside an isolated `<iframe>` with strict sandbox permissions.
+3. **No Secrets in Repo**: Environment configurations use standard `.env` management with `.gitignore` exclusion.
+
+---
+
+## 🧪 Running Automated Tests
 
 ```bash
-# Backend tests
+# Backend Automated Test Suite
 cd backend
-pip install -r requirements.txt
-pytest
-
-# Or via Docker
-docker compose run backend pytest
+python tests/test_phase2.py   # Database CRUD, SSE streaming, Config endpoints
+python tests/test_phase3.py   # Transcript ingestion, vector indexing, semantic retrieval
+python tests/test_phase4.py   # RAG Skill, Ship 30 Skill, Artifact generation
 ```
 
-## 📚 Documentation
+See [docs/test_plan.md](docs/test_plan.md) for the manual UI evaluation checklist.
 
-| Document | Description |
-|----------|-------------|
-| [PRD](docs/PRD.md) | Product requirements, user flows, acceptance criteria |
-| [Architecture](docs/architecture.md) | System design, DB schema, API contracts |
-| [Design](docs/design.md) | UI/UX principles, component specs, accessibility |
+---
 
-## 🛠️ Development
+## 📚 Documentation & Deliverables
 
-### Backend (FastAPI)
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # or .\venv\Scripts\activate on Windows
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+| Deliverable | Document Link | Description |
+|---|---|---|
+| **PRD** | [docs/PRD.md](docs/PRD.md) | Discovery brief, JTBD, success metrics, assumptions, scope choices, and risk mitigations |
+| **Architecture** | [docs/architecture.md](docs/architecture.md) | Database schema, API endpoints, agent routing topology, and security model |
+| **Design** | [docs/design.md](docs/design.md) | Design tokens, component specs, accessibility (WCAG AA), and micro-animations |
+| **Test Plan** | [docs/test_plan.md](docs/test_plan.md) | Automated test suite and manual verification checklist |
+| **Agent Log** | [agent-transcripts/agent_development_log.md](agent-transcripts/agent_development_log.md) | AI coding agent engineering logs, iteration history, and technical corrections |
+| **Demo Script** | [docs/demo_script.md](docs/demo_script.md) | 2–3 minute video presentation script with camera guidance |
 
-### Frontend (React + Vite)
-```bash
-cd frontend
-npm install
-npm run dev
-```
+---
 
-## 🔒 Security
+## 📹 Demo Video
 
-- Generated HTML artifacts are rendered in a **sandboxed iframe** with `sandbox="allow-styles"` — no script execution
-- All HTML is sanitized with **DOMPurify** before rendering
-- No secrets committed to the repository
-- API keys are loaded from environment variables only
-
-## 📝 License
-
-MIT
+- **YouTube Demo Video:** [Link to Demo Video](https://youtube.com) *(Record using [docs/demo_script.md](docs/demo_script.md))*
