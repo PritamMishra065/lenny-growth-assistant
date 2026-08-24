@@ -55,23 +55,32 @@ async def get_model_config():
 
 @router.put("/model", response_model=ModelConfig)
 async def update_model_config(body: ModelConfigUpdate):
-    """Switch the active LLM provider."""
+    """Switch the active LLM provider and optionally configure its API key."""
     provider = body.provider.lower()
+
+    # If an API key is provided, update the setting in memory
+    if body.api_key:
+        if provider == "gemini":
+            settings.GEMINI_API_KEY = body.api_key.strip()
+        elif provider == "anthropic":
+            settings.ANTHROPIC_API_KEY = body.api_key.strip()
+        elif provider == "openai":
+            settings.OPENAI_API_KEY = body.api_key.strip()
 
     if provider == "gemini" and not settings.GEMINI_API_KEY:
         raise HTTPException(
             status_code=400,
-            detail="Gemini API key not configured. Set GEMINI_API_KEY in .env"
+            detail="Gemini API key not configured. Please enter your Gemini API Key."
         )
     if provider == "anthropic" and not settings.ANTHROPIC_API_KEY:
         raise HTTPException(
             status_code=400,
-            detail="Anthropic API key not configured. Set ANTHROPIC_API_KEY in .env"
+            detail="Anthropic API key not configured. Please enter your Anthropic API Key."
         )
     if provider == "openai" and not settings.OPENAI_API_KEY:
         raise HTTPException(
             status_code=400,
-            detail="OpenAI API key not configured. Set OPENAI_API_KEY in .env"
+            detail="OpenAI API key not configured. Please enter your OpenAI API Key."
         )
 
     settings.LLM_PROVIDER = provider

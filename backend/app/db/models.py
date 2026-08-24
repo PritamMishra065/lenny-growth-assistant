@@ -82,8 +82,9 @@ class ModelConfig(BaseModel):
 
 
 class ModelConfigUpdate(BaseModel):
-    provider: str = Field(..., pattern="^(ollama|anthropic|openai)$")
+    provider: str = Field(..., pattern="^(ollama|gemini|anthropic|openai)$")
     model: Optional[str] = None
+    api_key: Optional[str] = None
 
 
 # ─── Errors ────────────────────────────────────────────

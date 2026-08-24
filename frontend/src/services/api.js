@@ -14,11 +14,11 @@ export async function fetchModelConfig() {
   return res.json();
 }
 
-export async function updateModelConfig(provider, model = null) {
+export async function updateModelConfig(provider, model = null, apiKey = null) {
   const res = await fetch(`${API_BASE}/api/config/model`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider, model }),
+    body: JSON.stringify({ provider, model, api_key: apiKey }),
   });
   if (!res.ok) {
     const error = await res.json();
