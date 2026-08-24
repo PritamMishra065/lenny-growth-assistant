@@ -115,10 +115,12 @@ The application includes a zero-friction model toggle in the header:
 
 | Provider | Model Default | Requirements |
 |---|---|---|
-| **Ollama (Local)** | `llama3:8b` (or `llama3.1:8b`) | Free, runs 100% locally via `ollama serve` |
-| **Google Gemini** | `gemini-3.5-flash` | `GEMINI_API_KEY` in `.env` |
-| **Anthropic Claude** | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` in `.env` |
-| **OpenAI** | `gpt-4o-mini` | `OPENAI_API_KEY` in `.env` |
+| **Ollama (Local)** | `llama3:8b` (or `llama3.1:8b`) | Free, runs 100% locally via `ollama serve`. **Auto-detects dedicated NVIDIA (CUDA) / Apple (Metal) GPUs** for high-speed hardware acceleration, or falls back to CPU. |
+| **Google Gemini** | `gemini-3.5-flash` | `GEMINI_API_KEY` in `.env` (or configure via in-app popup) |
+| **Anthropic Claude** | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` in `.env` (or configure via in-app popup) |
+| **OpenAI** | `gpt-4o-mini` | `OPENAI_API_KEY` in `.env` (or configure via in-app popup) |
+
+> ⚡ **GPU Acceleration Note**: Ollama automatically offloads layers to dedicated GPUs (NVIDIA CUDA / Apple Metal / AMD ROCm) when available. Because Docker connects to host Ollama via `host.docker.internal:11434`, embedding generation and inference automatically leverage your host machine's dedicated GPU with zero extra configuration.
 
 ---
 
