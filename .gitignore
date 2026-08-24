@@ -43,6 +43,7 @@ docker-compose.override.yml
 
 # Data / Vector DB
 data/chroma/
+backend/data/
 data/*.pkl
 data/*.bin
 *.db
