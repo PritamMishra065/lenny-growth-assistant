@@ -3,6 +3,7 @@ Application configuration loaded from environment variables.
 Uses pydantic-settings for validation and type coercion.
 """
 
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -34,6 +35,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4o-mini"
 
+    # --- Google Gemini ---
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.5-flash"
+
     # --- Embeddings ---
     EMBEDDING_PROVIDER: str = "ollama"  # "ollama" or "openai"
     EMBEDDING_MODEL: str = "nomic-embed-text"
@@ -43,7 +48,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     model_config = {
-        "env_file": ".env",
+        "env_file": os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
         "extra": "ignore",

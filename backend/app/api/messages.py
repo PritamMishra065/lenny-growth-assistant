@@ -65,8 +65,8 @@ async def send_message(session_id: UUID, body: MessageCreate, db: AsyncSession =
     async def generate_sse():
         """Generate SSE stream for the assistant's response."""
         try:
-            # Import agent router here to avoid circular imports
             from app.agents.router import route_message
+            from app.db.database import async_session
 
             full_content = ""
             sources = []
@@ -75,8 +75,9 @@ async def send_message(session_id: UUID, body: MessageCreate, db: AsyncSession =
             model_provider = settings.LLM_PROVIDER
             model_name = getattr(settings, f"{settings.LLM_PROVIDER.upper()}_MODEL", "unknown")
 
-            # Get session history for context
-            history = await queries.get_session_history(db, session_id)
+            # Get session history with a fresh DB session
+            async with async_session() as db_session:
+                history = await queries.get_session_history(db_session, session_id)
 
             # Route to appropriate skill and stream response
             async for event in route_message(body.content, history, session_id):
@@ -105,19 +106,20 @@ async def send_message(session_id: UUID, body: MessageCreate, db: AsyncSession =
             # Calculate latency
             latency_ms = int((time.time() - start_time) * 1000)
 
-            # Save assistant message
-            saved_msg = await queries.create_message(
-                db,
-                session_id=session_id,
-                role="assistant",
-                content=full_content,
-                sources=sources,
-                artifact=artifact,
-                skill_used=skill_used,
-                model_provider=model_provider,
-                model_name=model_name,
-                latency_ms=latency_ms,
-            )
+            # Save assistant message with a fresh DB session
+            async with async_session() as db_session:
+                saved_msg = await queries.create_message(
+                    db_session,
+                    session_id=session_id,
+                    role="assistant",
+                    content=full_content,
+                    sources=sources,
+                    artifact=artifact,
+                    skill_used=skill_used,
+                    model_provider=model_provider,
+                    model_name=model_name,
+                    latency_ms=latency_ms,
+                )
 
             # Send done event
             yield f"event: done\ndata: {json.dumps({'message_id': str(saved_msg['id']), 'skill_used': skill_used, 'latency_ms': latency_ms})}\n\n"

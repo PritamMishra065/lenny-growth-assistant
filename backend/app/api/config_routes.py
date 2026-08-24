@@ -5,7 +5,6 @@ Model configuration endpoints — switch LLM provider at runtime.
 from fastapi import APIRouter, HTTPException
 from app.db.models import ModelConfig, ModelConfigUpdate
 from app.config import settings
-from app.api.health import check_ollama_health
 import structlog
 
 logger = structlog.get_logger()
@@ -16,43 +15,30 @@ def get_available_providers() -> list[dict]:
     """Get list of available LLM providers with their status."""
     providers = [
         {
+            "id": "gemini",
+            "name": "Google Gemini",
+            "model": settings.GEMINI_MODEL,
+            "configured": bool(settings.GEMINI_API_KEY),
+        },
+        {
             "id": "ollama",
             "name": "Ollama (Local)",
             "model": settings.OLLAMA_MODEL,
-            "configured": True,  # Always configured, may not be running
+            "configured": True,
+        },
+        {
+            "id": "anthropic",
+            "name": "Anthropic Claude",
+            "model": settings.ANTHROPIC_MODEL,
+            "configured": bool(settings.ANTHROPIC_API_KEY),
+        },
+        {
+            "id": "openai",
+            "name": "OpenAI",
+            "model": settings.OPENAI_MODEL,
+            "configured": bool(settings.OPENAI_API_KEY),
         },
     ]
-
-    if settings.ANTHROPIC_API_KEY:
-        providers.append({
-            "id": "anthropic",
-            "name": "Anthropic Claude",
-            "model": settings.ANTHROPIC_MODEL,
-            "configured": True,
-        })
-    else:
-        providers.append({
-            "id": "anthropic",
-            "name": "Anthropic Claude",
-            "model": settings.ANTHROPIC_MODEL,
-            "configured": False,
-        })
-
-    if settings.OPENAI_API_KEY:
-        providers.append({
-            "id": "openai",
-            "name": "OpenAI",
-            "model": settings.OPENAI_MODEL,
-            "configured": True,
-        })
-    else:
-        providers.append({
-            "id": "openai",
-            "name": "OpenAI",
-            "model": settings.OPENAI_MODEL,
-            "configured": False,
-        })
-
     return providers
 
 
@@ -70,22 +56,27 @@ async def get_model_config():
 @router.put("/model", response_model=ModelConfig)
 async def update_model_config(body: ModelConfigUpdate):
     """Switch the active LLM provider."""
-    # Validate the provider is configured
-    if body.provider == "anthropic" and not settings.ANTHROPIC_API_KEY:
+    provider = body.provider.lower()
+
+    if provider == "gemini" and not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="Gemini API key not configured. Set GEMINI_API_KEY in .env"
+        )
+    if provider == "anthropic" and not settings.ANTHROPIC_API_KEY:
         raise HTTPException(
             status_code=400,
             detail="Anthropic API key not configured. Set ANTHROPIC_API_KEY in .env"
         )
-    if body.provider == "openai" and not settings.OPENAI_API_KEY:
+    if provider == "openai" and not settings.OPENAI_API_KEY:
         raise HTTPException(
             status_code=400,
             detail="OpenAI API key not configured. Set OPENAI_API_KEY in .env"
         )
 
-    # Update the runtime setting
-    settings.LLM_PROVIDER = body.provider
+    settings.LLM_PROVIDER = provider
     if body.model:
-        attr_name = f"{body.provider.upper()}_MODEL"
+        attr_name = f"{provider.upper()}_MODEL"
         if hasattr(settings, attr_name):
             setattr(settings, attr_name, body.model)
 
@@ -93,7 +84,7 @@ async def update_model_config(body: ModelConfigUpdate):
 
     logger.info(
         "model_config_updated",
-        provider=body.provider,
+        provider=settings.LLM_PROVIDER,
         model=current_model,
     )
 
