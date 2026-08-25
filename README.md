@@ -174,4 +174,4 @@ See [docs/test_plan.md](docs/test_plan.md) for the manual UI evaluation checklis
 
 ## 📹 Demo Video
 
-- **YouTube Demo Video:** [Link to Demo Video]([https://youtube.com](https://youtu.be/TJWNozWRW3o)) *(Record using [docs/demo_script.md](docs/demo_script.md))*
+- **YouTube Demo Video:** [Link to Demo Video](https://youtu.be/TJWNozWRW3o) *(Record using [docs/demo_script.md](docs/demo_script.md))*
